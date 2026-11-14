@@ -46,29 +46,36 @@ struct SleepChart: View {
 
     var body: some View {
         let m = SleepModel(sleep)
-        if m.isEmpty {
-            Hint("填入睡、起床时间或体重后，这里会画出睡眠条和体重线。")
+        let heart = RestingHeartRateModel(sleep.rhr)
+        if m.isEmpty && heart.isEmpty {
+            Hint("填入睡、起床时间、体重或静息心率后，这里会画出对应图表。")
         } else {
             VStack(alignment: .leading, spacing: 4) {
-                Canvas { ctx, size in draw(m, in: &ctx, k: size.width / m.Wd) }
-                    .aspectRatio(m.Wd / m.H, contentMode: .fit)
-                    .padding(.top, 8)
-                HStack(spacing: 14) {
-                    HStack(spacing: 5) {
-                        Canvas { ctx, size in
-                            let r = CGRect(origin: .zero, size: size).insetBy(dx: 0.75, dy: 0.75)
-                            hatch(&ctx, r, k: 1)
-                            ctx.stroke(Path(r), with: .color(C.ink), lineWidth: 1.5)
+                if !m.isEmpty {
+                    Canvas { ctx, size in draw(m, in: &ctx, k: size.width / m.Wd) }
+                        .aspectRatio(m.Wd / m.H, contentMode: .fit)
+                        .padding(.top, 8)
+                    HStack(spacing: 14) {
+                        HStack(spacing: 5) {
+                            Canvas { ctx, size in
+                                let r = CGRect(origin: .zero, size: size).insetBy(dx: 0.75, dy: 0.75)
+                                hatch(&ctx, r, k: 1)
+                                ctx.stroke(Path(r), with: .color(C.ink), lineWidth: 1.5)
+                            }
+                            .frame(width: 10, height: 12)
+                            Text("入睡 → 起床")
                         }
-                        .frame(width: 10, height: 12)
-                        Text("入睡 → 起床")
+                        HStack(spacing: 5) {
+                            Rectangle().fill(C.red).frame(width: 18, height: 2)
+                            Text("体重")
+                        }
                     }
-                    HStack(spacing: 5) {
-                        Rectangle().fill(C.red).frame(width: 18, height: 2)
-                        Text("体重")
-                    }
+                    .font(.ui(12)).foregroundStyle(C.ink2)
                 }
-                .font(.ui(12)).foregroundStyle(C.ink2)
+                if !heart.isEmpty {
+                    RestingHeartRateChart(model: heart)
+                        .padding(.top, m.isEmpty ? 8 : 16)
+                }
             }
         }
     }
@@ -146,6 +153,76 @@ struct SleepChart: View {
                 ctx.stroke(c, with: .color(C.red), lineWidth: 1.6 * k)
                 label(SleepModel.fmt(v), m.x(i), y(v) - 6, .center, color: C.red)
             }
+        }
+    }
+}
+
+/// 独立的 bpm 轴；空白、非正整数和非数字不参与绘图，缺测日不连线。
+struct RestingHeartRateModel {
+    let values: [Double?]
+    let lower: Double
+    let step: Double
+    var upper: Double { lower + 4 * step }
+    var isEmpty: Bool { values.allSatisfy { $0 == nil } }
+
+    init(_ raw: [String]) {
+        values = Week.seven(raw).map {
+            let text = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard text.range(of: "^[0-9]{1,3}$", options: .regularExpression) != nil,
+                  let value = Double(text), value > 0 else { return nil }
+            return value
+        }
+        let valid = values.compactMap { $0 }
+        let lo = valid.min() ?? 60, hi = valid.max() ?? 60
+        step = max(5, ceil((hi - lo + 10) / 20) * 5)
+        lower = max(0, floor(((lo + hi) / 2 - 2 * step) / 5) * 5)
+    }
+}
+
+private struct RestingHeartRateChart: View {
+    let model: RestingHeartRateModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("静息心率 · bpm").font(.ui(12, .medium)).foregroundStyle(C.ink2)
+            Canvas { ctx, size in
+                let k = size.width / 320
+                func point(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x * k, y: y * k) }
+                func x(_ i: Int) -> Double { 38 + (Double(i) + 0.5) * 36 }
+                func y(_ value: Double) -> Double { 18 + (model.upper - value) / (model.upper - model.lower) * 76 }
+                func label(_ text: String, _ x: Double, _ y: Double, anchor: UnitPoint = .center, color: Color = C.ink3) {
+                    ctx.draw(Text(text).font(.system(size: 10 * k)).foregroundStyle(color), at: point(x, y), anchor: anchor)
+                }
+                for tick in 0...4 {
+                    let value = model.lower + Double(tick) * model.step
+                    var line = Path()
+                    line.move(to: point(38, y(value)))
+                    line.addLine(to: point(290, y(value)))
+                    ctx.stroke(line, with: .color(C.line), lineWidth: 1)
+                    label(String(Int(value)), 33, y(value), anchor: .trailing)
+                }
+                var line = Path(), pen = false
+                for (i, value) in model.values.enumerated() {
+                    guard let value else { pen = false; continue }
+                    if pen { line.addLine(to: point(x(i), y(value))) }
+                    else { line.move(to: point(x(i), y(value))) }
+                    pen = true
+                }
+                ctx.stroke(line, with: .color(C.blue), style: StrokeStyle(lineWidth: 1.8 * k, lineCap: .round, lineJoin: .round))
+                for (i, value) in model.values.enumerated() {
+                    label(Dates.WD[i], x(i), 113)
+                    guard let value else { continue }
+                    let circle = Path(ellipseIn: CGRect(x: (x(i) - 2.6) * k, y: (y(value) - 2.6) * k, width: 5.2 * k, height: 5.2 * k))
+                    ctx.fill(circle, with: .color(C.paper))
+                    ctx.stroke(circle, with: .color(C.blue), lineWidth: 1.6 * k)
+                    label(String(Int(value)), x(i), y(value) - 10, color: C.blue)
+                }
+            }
+            .aspectRatio(320.0 / 124, contentMode: .fit)
+            .accessibilityLabel("静息心率，每分钟心跳次数")
+            .accessibilityValue(model.values.enumerated().compactMap { i, value in
+                value.map { "\(Dates.WD[i]) \(Int($0))" }
+            }.joined(separator: "，"))
         }
     }
 }

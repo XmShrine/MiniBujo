@@ -138,11 +138,13 @@ struct Sleep: Codable, Equatable {
     var bed: [String] = Array(repeating: "", count: 7)
     var wake: [String] = Array(repeating: "", count: 7)
     var wt: [String] = Array(repeating: "", count: 7)
+    var rhr: [String] = Array(repeating: "", count: 7)
     init() {}
-    enum CodingKeys: String, CodingKey { case bed, wake, wt }
+    enum CodingKeys: String, CodingKey { case bed, wake, wt, rhr }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         bed = Week.seven(c.v(.bed, [])); wake = Week.seven(c.v(.wake, [])); wt = Week.seven(c.v(.wt, []))
+        rhr = Week.seven(c.v(.rhr, []))
     }
 }
 

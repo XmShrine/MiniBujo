@@ -35,6 +35,36 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(d.days["2026-11-11"]?.times, [:], "缺的字段补齐")
         XCTAssertEqual(d.weeks["2026-11-09"]?.habits.first?.marks.count, 7, "不足 7 天的数组补齐")
         XCTAssertEqual(d.weeks["2026-11-09"]?.sleep.bed[0], "23:30")
+        XCTAssertEqual(d.weeks["2026-11-09"]?.sleep.rhr, Array(repeating: "", count: 7), "旧数据缺少静息心率时补空白")
+    }
+
+    func testRestingHeartRateWebRoundTrip() throws {
+        let json = #"{"weeks":{"2026-11-09":{"sleep":{"wt":["52.4"],"rhr":["62","","58"]}}}}"#
+        let doc = try XCTUnwrap(Doc.parse(Data(json.utf8)))
+        let sleep = try XCTUnwrap(doc.weeks["2026-11-09"]?.sleep)
+        XCTAssertEqual(sleep.rhr, ["62", "", "58", "", "", "", ""])
+        XCTAssertEqual(sleep.wt[0], "52.4")
+        let output = try XCTUnwrap(JSONSerialization.jsonObject(with: doc.serialized()) as? [String: Any])
+        let weeks = try XCTUnwrap(output["weeks"] as? [String: [String: Any]])
+        let exported = try XCTUnwrap(weeks["2026-11-09"]?["sleep"] as? [String: Any])
+        XCTAssertEqual(exported["rhr"] as? [String], sleep.rhr)
+        XCTAssertEqual(Doc.parse(doc.serialized())?.weeks["2026-11-09"]?.sleep, sleep)
+        XCTAssertTrue(doc.newWeek("2026-11-16").sleep.rhr.allSatisfy(\.isEmpty), "新周不沿用测量值")
+    }
+
+    func testRestingHeartRateChartData() {
+        let model = RestingHeartRateModel(["62", "", "58", "0", "-1", "60.5", "NaN"])
+        XCTAssertEqual(model.values, [62, nil, 58, nil, nil, nil, nil])
+        XCTAssertFalse(model.isEmpty)
+        XCTAssertTrue(RestingHeartRateModel([]).isEmpty)
+        for raw in [["60"], Array(repeating: "60", count: 7), ["1", "999"]] {
+            let chart = RestingHeartRateModel(raw)
+            XCTAssertGreaterThan(chart.upper, chart.lower)
+            for value in chart.values.compactMap({ $0 }) {
+                XCTAssertGreaterThanOrEqual(value, chart.lower)
+                XCTAssertLessThanOrEqual(value, chart.upper)
+            }
+        }
     }
 
     func testRejectsForeignJSON() {

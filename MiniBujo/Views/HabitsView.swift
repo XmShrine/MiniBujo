@@ -60,7 +60,7 @@ struct HabitsLeft: View {
             .buttonStyle(.pill)
             .padding(.top, 14)
 
-            SectionTitle("SLEEP · 睡眠 & 体重")
+            SectionTitle("SLEEP · 睡眠 & 身体记录")
             SleepTable(mon: mon)
             SleepChart(sleep: W.sleep)
         }
@@ -134,30 +134,75 @@ private struct SleepTable: View {
     let mon: String
 
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            table(compact: false).frame(minWidth: 500)
+            table(compact: true)
+        }
+    }
+
+    private func table(compact: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Color.clear.frame(width: 38, height: 1)
-                ForEach(["入睡", "起床", "体重"], id: \.self) {
+                ForEach(compact ? ["入睡", "起床"] : ["入睡", "起床", "体重", "静息心率"], id: \.self) {
                     Text($0).font(.ui(12, .medium)).foregroundStyle(C.ink3).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.bottom, 2)
             ForEach(0..<7, id: \.self) { i in
-                HStack(spacing: 8) {
-                    Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(C.ink).lineLimit(1).fixedSize().frame(width: 38, alignment: .leading)
-                    TimeCell(value: bind(\.bed, i), fallback: "23:00").frame(maxWidth: .infinity, alignment: .leading)
-                    TimeCell(value: bind(\.wake, i), fallback: "07:00").frame(maxWidth: .infinity, alignment: .leading)
-                    TextField("—", text: bind(\.wt, i))
-                        .textFieldStyle(.plain).font(.ui(13)).foregroundStyle(C.ink)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 0) {
+                    HStack(spacing: 8) {
+                        Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(C.ink).lineLimit(1).fixedSize().frame(width: 38, alignment: .leading)
+                        TimeCell(value: bind(\.bed, i), fallback: "23:00").frame(maxWidth: .infinity, alignment: .leading)
+                        TimeCell(value: bind(\.wake, i), fallback: "07:00").frame(maxWidth: .infinity, alignment: .leading)
+                        if !compact {
+                            weightCell(i)
+                            heartRateCell(i)
+                        }
+                    }
+                    .frame(minHeight: 30)
+                    if compact {
+                        HStack(spacing: 8) {
+                            Color.clear.frame(width: 38, height: 1)
+                            HStack(spacing: 4) {
+                                Text("体重").foregroundStyle(C.ink3)
+                                weightCell(i)
+                            }.frame(maxWidth: .infinity)
+                            HStack(spacing: 4) {
+                                Text("静息心率").foregroundStyle(C.ink3).fixedSize()
+                                heartRateCell(i)
+                            }.frame(maxWidth: .infinity)
+                        }
+                        .font(.ui(11))
+                        .padding(.bottom, 5)
+                    }
                 }
-                .frame(minHeight: 30)
                 .overlay(alignment: .bottom) { Rectangle().fill(C.line).frame(height: 1) }
             }
         }
+    }
+
+    private func weightCell(_ i: Int) -> some View {
+        TextField("—", text: bind(\.wt, i))
+            .textFieldStyle(.plain).font(.ui(13)).foregroundStyle(C.ink)
+            .accessibilityLabel("\(Dates.WD[i]) 体重")
+            #if os(iOS)
+            .keyboardType(.decimalPad)
+            #endif
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func heartRateCell(_ i: Int) -> some View {
+        HStack(spacing: 2) {
+            TextField("—", text: bind(\.rhr, i))
+                .textFieldStyle(.plain).font(.ui(13)).foregroundStyle(C.ink)
+                .accessibilityLabel("\(Dates.WD[i]) 静息心率，每分钟心跳次数")
+                #if os(iOS)
+                .keyboardType(.numberPad)
+                #endif
+            Text("bpm").font(.ui(10)).foregroundStyle(C.ink3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func bind(_ kp: WritableKeyPath<Sleep, [String]>, _ i: Int) -> Binding<String> {
