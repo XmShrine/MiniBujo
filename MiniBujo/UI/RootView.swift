@@ -295,10 +295,15 @@ struct Spread: View {
             if layout.wide {
                 HStack(alignment: .top, spacing: 0) {
                     page(left: true).id("L" + key)
-                        .overlay(alignment: .trailing) { Rectangle().fill(C.line).frame(width: 1) }
                     page(left: false).id("R" + key)
                 }
                 .fixedSize(horizontal: false, vertical: true)
+                // Both sheets extend to the taller page, even when one has little content.
+                .background(DotPaper())
+                .overlay {
+                    Rectangle().fill(C.line).frame(width: 1)
+                        .allowsHitTesting(false)
+                }
             } else {
                 VStack(spacing: 0) {
                     page(left: true).id("L" + key)

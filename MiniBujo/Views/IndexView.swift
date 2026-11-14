@@ -114,7 +114,7 @@ struct IndexRight: View {
                 key(AnyView(Text("★").font(.ui(13)).foregroundStyle(C.red)), "重要（输入时用 ! 开头）")
                 key(AnyView(Text("abc").strikethrough().foregroundStyle(C.ink3)), "取消 cancelled")
                 key(AnyView(Circle().fill(C.red).frame(width: 10, height: 10)), "红圆点：这天有重要安排")
-                key(AnyView(Circle().fill(C.blue).frame(width: 10, height: 10)), "蓝圆点：这天有不太重要的预约")
+                key(AnyView(Circle().fill(C.blue).frame(width: 10, height: 10)), "蓝圆点：这天有日常安排")
             }
             Hint("点符号切换状态；每行右侧 ⋯ 可以改类型、标重要、迁移、取消、删除。回车新增一行，清空一行再离开就会删掉它。")
 

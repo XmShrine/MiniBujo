@@ -87,7 +87,7 @@ enum ReminderPlanner {
                     add("eve.\(s)", at(Dates.addDays(s, -1), minutes: prefs.eveMin), "🔴 明天有重要安排", sum, "day", s)
                     add("morning.\(s)", at(s, minutes: prefs.morningMin), "🔴 今天有重要安排", sum, "day", s)
                 } else if dot == "blue" {
-                    add("morning.\(s)", at(s, minutes: prefs.morningMin), "🔵 今天有预约", sum, "day", s)
+                    add("morning.\(s)", at(s, minutes: prefs.morningMin), "🔵 今天有日常安排", sum, "day", s)
                 }
             }
 

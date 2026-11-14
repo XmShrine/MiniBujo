@@ -8,7 +8,7 @@ struct MonthLeft: View {
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(Dates.MONTHS[m - 1], sub: "\(y) · 月视图", size: 46)
             Calendar(key: key, y: y, m: m)
-            Hint("点日期贴圆点：\(Text("●").foregroundStyle(C.red)) 重要安排  \(Text("●").foregroundStyle(C.blue)) 一般预约 · 再点一次撕掉 · 长按可打开那一天")
+            Hint("点日期贴圆点：\(Text("●").foregroundStyle(C.red)) 重要安排  \(Text("●").foregroundStyle(C.blue)) 日常安排 · 再点一次撕掉 · 长按可打开那一天")
             SectionTitle("本月目标 · goals")
             BulletList(ref: .mg(key), placeholder: "这个月想做成的事…")
         }
@@ -89,7 +89,9 @@ struct MonthRight: View {
             .padding(.top, 2)
             .help("打开这一天")
             Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(s == today ? C.ink : C.ink3)
-                .frame(width: 34, height: 26, alignment: .leading)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(width: 48, height: 26, alignment: .leading)
             TextField("", text: Binding(get: { store.doc.days[s]?.mlog ?? "" },
                                         set: { v in store.editDay(s) { $0.mlog = v } }), axis: .vertical)
                 .textFieldStyle(.plain).font(.ui(14)).foregroundStyle(C.ink)
