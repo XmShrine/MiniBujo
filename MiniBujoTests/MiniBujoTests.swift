@@ -198,3 +198,70 @@ final class ReminderTests: XCTestCase {
         XCTAssertEqual(plan.count, ReminderPlanner.maxCount)
     }
 }
+
+final class AppearanceTests: XCTestCase {
+    func testPaperFormFallbackAndCases() {
+        XCTAssertEqual(PaperForm.allCases.count, 4, "点阵 / 横线 / 方格 / 空白")
+        XCTAssertEqual(PaperForm.from("lines"), .lines)
+        XCTAssertEqual(PaperForm.from("grid"), .grid)
+        XCTAssertEqual(PaperForm.from("nope"), .dots, "未知值回落到原来的点阵纸")
+        XCTAssertEqual(PaperForm.from(nil), .dots)
+    }
+
+    func testDisplayFontFallback() {
+        XCTAssertEqual(DisplayFont.from("serif"), .serif)
+        XCTAssertEqual(DisplayFont.from("handwriting"), .handwriting)
+        XCTAssertEqual(DisplayFont.from(""), .handwriting, "未知字体回落到原来的手写体")
+        XCTAssertEqual(DisplayFont.handwriting.bodyDesign, .default, "手写体只用于标题，正文保持系统设计")
+        XCTAssertEqual(DisplayFont.mono.bodyDesign, .monospaced)
+    }
+
+    func testTextSizeScalesAreOrdered() {
+        let scales = DisplayTextSize.allCases.map(\.scale)
+        XCTAssertEqual(scales, scales.sorted(), "小 < 标准 < 大 < 特大")
+        XCTAssertEqual(DisplayTextSize.standard.scale, 1.0, "标准就是原来的字号")
+        XCTAssertEqual(DisplayTextSize.from("extraLarge"), .extraLarge)
+        XCTAssertEqual(DisplayTextSize.from(nil), .standard)
+    }
+
+    func testPaperPaletteFallbackAndSwatches() {
+        XCTAssertEqual(PaperPalette.from("cream"), .cream)
+        XCTAssertEqual(PaperPalette.from("bogus"), .classic)
+        XCTAssertEqual(PaperPalette.classic.paper.0, 0xfbfaf6, "经典配色就是原来的纸色")
+        XCTAssertEqual(PaperPalette.classic.paper.1, 0x22211f, "经典配色就是原来的深色纸面")
+        let swatches = PaperPalette.allCases.map(\.swatch)
+        XCTAssertEqual(Set(swatches).count, swatches.count, "每种背景颜色的纸面色都不同")
+    }
+
+    func testUserDefaultsCurrentReadsAndRestores() {
+        let ud = UserDefaults.standard
+        let old = [
+            AppearanceKeys.paperForm: ud.object(forKey: AppearanceKeys.paperForm),
+            AppearanceKeys.font: ud.object(forKey: AppearanceKeys.font),
+            AppearanceKeys.textSize: ud.object(forKey: AppearanceKeys.textSize),
+            AppearanceKeys.palette: ud.object(forKey: AppearanceKeys.palette)
+        ]
+        defer {
+            for (k, v) in old {
+                if let v { ud.set(v, forKey: k) } else { ud.removeObject(forKey: k) }
+            }
+        }
+
+        ud.set("grid", forKey: AppearanceKeys.paperForm)
+        ud.set("rounded", forKey: AppearanceKeys.font)
+        ud.set("large", forKey: AppearanceKeys.textSize)
+        ud.set("mint", forKey: AppearanceKeys.palette)
+
+        XCTAssertEqual(PaperForm.current, .grid)
+        XCTAssertEqual(DisplayFont.current, .rounded)
+        XCTAssertEqual(DisplayTextSize.current, .large)
+        XCTAssertEqual(DisplayTextSize.currentScale, 1.14, accuracy: 0.0001)
+        XCTAssertEqual(PaperPalette.current, .mint)
+    }
+
+    func testWeekdayLabelsFitOneLineGuard() {
+        // 星期栏用的就是这 7 个词，版面按单行处理
+        XCTAssertEqual(Dates.WD, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+        XCTAssertTrue(Dates.WD.allSatisfy { $0.count == 3 })
+    }
+}

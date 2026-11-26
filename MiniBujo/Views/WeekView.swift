@@ -46,6 +46,7 @@ struct DayBox: View {
                 DotSticker(dot: o?.dot, label: "\(Dates.dayOfMonth(s))", size: 22) { store.cycleDot(s) }
                 Button { store.go(.day, s) } label: {
                     Text(Dates.WD[i]).font(.hand(20)).foregroundStyle(C.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                 }
                 .buttonStyle(.plain)
                 .help("打开日视图")

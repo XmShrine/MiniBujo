@@ -28,13 +28,15 @@ extension Color {
 }
 
 enum C {
-    static let desk = Color(light: 0xe7e4dc, dark: 0x131312)
-    static let paper = Color(light: 0xfbfaf6, dark: 0x22211f)
+    // 纸面相关的四种颜色由「显示」设置里的背景颜色决定（PaperPalette），
+    // 其余墨色不变，这样换纸色时深 / 浅外观下都保持可读。
+    static var desk: Color { let p = PaperPalette.current.desk; return Color(light: p.0, dark: p.1) }
+    static var paper: Color { let p = PaperPalette.current.paper; return Color(light: p.0, dark: p.1) }
     static let ink = Color(light: 0x1e1e1c, dark: 0xecebe6)
     static let ink2 = Color(light: 0x5d5b56, dark: 0xb5b2aa)
     static let ink3 = Color(light: 0xa29f97, dark: 0x78756e)
-    static let line = Color(light: 0xd9d4c9, dark: 0x3a3834)
-    static let grid = Color(light: 0xd6d1c5, dark: 0x383631)
+    static var line: Color { let p = PaperPalette.current.line; return Color(light: p.0, dark: p.1) }
+    static var grid: Color { let p = PaperPalette.current.grid; return Color(light: p.0, dark: p.1) }
     static let cover = Color(light: 0x1c1c1b, dark: 0x3a3935)
     static let red = Color(hex: 0xd9473b)
     static let blue = Color(hex: 0x3b63c4)
@@ -58,27 +60,76 @@ enum C {
 }
 
 extension Font {
-    /// 手写体：用户点名要的 Bradley Hand
-    static func hand(_ size: CGFloat) -> Font { .custom("BradleyHandITCTT-Bold", size: size) }
-    static func ui(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font { .system(size: size, weight: weight) }
+    /// 标题 / 日期这类「手写在纸上」的字：字体和字号倍数都来自「显示」设置。
+    /// 默认仍是用户点名要的 Bradley Hand。字号用固定 pt（不跟随系统
+    /// Dynamic Type 无限放大），系统大字体另由 RootView 的上限保护，
+    /// 否则日历、表格这类固定版面会被撑到断行、错位。
+    static func hand(_ size: CGFloat) -> Font {
+        let scaled = size * DisplayTextSize.currentScale
+        switch DisplayFont.current {
+        case .handwriting: return .custom("BradleyHandITCTT-Bold", size: scaled)
+        case .rounded: return .system(size: scaled, weight: .bold, design: .rounded)
+        case .serif: return .system(size: scaled, weight: .bold, design: .serif)
+        case .system: return .system(size: scaled, weight: .bold)
+        case .mono: return .system(size: scaled, weight: .bold, design: .monospaced)
+        }
+    }
+    static func ui(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size * DisplayTextSize.currentScale, weight: weight, design: DisplayFont.current.bodyDesign)
+    }
 }
 
-/// 点阵纸
+/// 纸面：形态（点阵 / 横线 / 方格 / 空白）和配色均响应「显示」设置，默认点阵。
+/// 名字沿用 DotPaper，调用处不用改。
 struct DotPaper: View {
+    @AppStorage(AppearanceKeys.paperForm) private var formRaw = PaperForm.dots.rawValue
+    @AppStorage(AppearanceKeys.palette) private var paletteRaw = PaperPalette.classic.rawValue
+    @AppStorage(AppearanceKeys.textSize) private var textSizeRaw = DisplayTextSize.standard.rawValue
+
     var body: some View {
+        let form = PaperForm.from(formRaw)
+        let pal = PaperPalette.from(paletteRaw)
+        let scale = DisplayTextSize.from(textSizeRaw).scale
+        let gridColor = Color(light: pal.grid.0, dark: pal.grid.1)
+        let paperColor = Color(light: pal.paper.0, dark: pal.paper.1)
+
         Canvas { ctx, size in
-            let step: CGFloat = 18
-            var y: CGFloat = 9
-            while y < size.height {
+            switch form {
+            case .blank:
+                break
+            case .dots:
+                let step: CGFloat = 18
+                var y: CGFloat = 9
+                while y < size.height {
+                    var x: CGFloat = 9
+                    while x < size.width {
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - 1, y: y - 1, width: 2, height: 2)), with: .color(gridColor))
+                        x += step
+                    }
+                    y += step
+                }
+            case .lines:
+                let step: CGFloat = 27 * scale
+                var y: CGFloat = 26 * scale
+                while y < size.height {
+                    ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(gridColor))
+                    y += step
+                }
+            case .grid:
+                let step: CGFloat = 18
                 var x: CGFloat = 9
                 while x < size.width {
-                    ctx.fill(Path(ellipseIn: CGRect(x: x - 1, y: y - 1, width: 2, height: 2)), with: .color(C.grid))
+                    ctx.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)), with: .color(gridColor))
                     x += step
                 }
-                y += step
+                var y: CGFloat = 9
+                while y < size.height {
+                    ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(gridColor))
+                    y += step
+                }
             }
         }
-        .background(C.paper)
+        .background(paperColor)
     }
 }
 
@@ -92,6 +143,8 @@ struct PillButtonStyle: ButtonStyle {
         configuration.label
             .font(.ui(small ? 12.5 : 13.5))
             .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .allowsTightening(true)
             .padding(.horizontal, small ? 9 : 12)
             .padding(.vertical, small ? 4 : 6)
             .foregroundStyle(kind == .primary ? C.paper : kind == .danger ? C.red : C.ink)
@@ -116,7 +169,10 @@ struct PageHeader<Trailing: View>: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text(title).font(.hand(size)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.6)
-            if !sub.isEmpty { Text(sub).font(.ui(13)).foregroundStyle(C.ink3) }
+            if !sub.isEmpty {
+                Text(sub).font(.ui(13)).foregroundStyle(C.ink3)
+                    .lineLimit(1).minimumScaleFactor(0.7).allowsTightening(true)
+            }
             Spacer(minLength: 0)
             trailing
         }
@@ -184,6 +240,8 @@ struct DotSticker: View {
                 }
                 if !label.isEmpty {
                     Text(label).font(.hand(size * 0.65)).foregroundStyle(dot == nil ? C.ink : .white)
+                        .lineLimit(1).minimumScaleFactor(0.55).allowsTightening(true)
+                        .padding(1)
                 }
             }
             .frame(width: size, height: size)
@@ -232,28 +290,32 @@ struct GrowingEditor: View {
     var ruled = false
 
     var body: some View {
+        let scale = DisplayTextSize.currentScale
+        let spacing: CGFloat = ruled ? 9 * scale : 2
+        let vPad: CGFloat = ruled ? 4 * scale : 2
         // 隐藏的 Text 负责撑开高度，TextEditor 叠在上面
         Text(text.isEmpty ? placeholder : text + " ")
-            .font(font).lineSpacing(ruled ? 9 : 2)
+            .font(font).lineSpacing(spacing)
             .foregroundStyle(text.isEmpty ? C.ink3 : .clear)
-            .padding(.vertical, ruled ? 4 : 2)
+            .padding(.vertical, vPad)
             .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .topLeading)
             .allowsHitTesting(false)
             .overlay(alignment: .topLeading) {
                 TextEditor(text: $text)
-                    .font(font).lineSpacing(ruled ? 9 : 2)
+                    .font(font).lineSpacing(spacing)
                     .scrollContentBackground(.hidden)
                     .scrollDisabled(true)
                     .padding(.horizontal, editorInset)
-                    .padding(.top, editorTopInset + (ruled ? 4 : 2))
+                    .padding(.top, editorTopInset + vPad)
             }
             .background {
                 if ruled {
                     Canvas { ctx, size in
-                        var y: CGFloat = 26
+                        let step: CGFloat = 27 * scale
+                        var y: CGFloat = 26 * scale
                         while y < size.height {
                             ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(C.line))
-                            y += 27
+                            y += step
                         }
                     }
                 }

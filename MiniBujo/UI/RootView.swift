@@ -15,19 +15,30 @@ extension EnvironmentValues {
     }
 }
 
-/// 让页面上的按钮能打开文件选择器 / 导出
+/// 让页面上的按钮能打开文件选择器 / 导出 / 显示设置
 @MainActor
 @Observable
 final class FileActions {
     enum Importing { case folder, json }
     var importing: Importing?
     var exporting = false
+    var showingAppearance = false
 }
 
 struct RootView: View {
     @Environment(BujoStore.self) private var store
     @Environment(FileSync.self) private var sync
     @State private var files = FileActions()
+    // 观察「显示」设置并拼成视图标识：任一项改动都会强制子视图重读字体 / 纸色 / 纸面，
+    // 同时 sheet 挂在外层 RootView 上，不会因为内部刷新而关闭设置弹窗。
+    @AppStorage(AppearanceKeys.paperForm) private var paperFormRaw = PaperForm.dots.rawValue
+    @AppStorage(AppearanceKeys.font) private var fontRaw = DisplayFont.handwriting.rawValue
+    @AppStorage(AppearanceKeys.textSize) private var textSizeRaw = DisplayTextSize.standard.rawValue
+    @AppStorage(AppearanceKeys.palette) private var paletteRaw = PaperPalette.classic.rawValue
+
+    private var appearanceID: String {
+        "\(paperFormRaw)-\(fontRaw)-\(textSizeRaw)-\(paletteRaw)"
+    }
 
     var body: some View {
         GeometryReader { g in
@@ -37,11 +48,20 @@ struct RootView: View {
                 Divider().overlay(C.line)
                 if layout.wide { wideBody } else { narrowBody }
             }
+            .id(appearanceID)
             .environment(\.layout, layout)
         }
         .background(C.desk.ignoresSafeArea())
+        // 用户把系统字体开到最大（无障碍级）时，菜单、日期选择器等系统控件会跟着放大，
+        // 把日历和表格撑到断行、错位。手帐是固定版面的纸面应用，这里把系统缩放限制在
+        // accessibility1 以内；想让字更大 / 更小，用「显示」设置里 App 自己的字号。
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .environment(files)
         .overlay(alignment: .bottom) { toast }
+        .sheet(isPresented: Binding(get: { files.showingAppearance }, set: { files.showingAppearance = $0 })) {
+            NavigationStack { AppearanceSettingsView() }
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        }
         .alert(store.confirm?.title ?? "", isPresented: Binding(
             get: { store.confirm != nil }, set: { if !$0 { store.confirm = nil } }
         ), presenting: store.confirm) { c in
@@ -157,8 +177,12 @@ struct TopBar: View {
             VStack(alignment: .trailing, spacing: 3) {
                 HStack(spacing: 6) {
                     if !sync.isLinked {
-                        Button("关联 iCloud") { files.importing = .folder }.buttonStyle(.pill(.primary, small: false))
+                        Button("关联 iCloud") { files.importing = .folder }
+                            .buttonStyle(.pill(.primary, small: layout.narrow))
                     }
+                    Button("显示") { files.showingAppearance = true }
+                        .buttonStyle(.pill(.normal, small: layout.narrow))
+                        .help("编辑显示：笔记本形态、字体和字体大小、背景颜色")
                     Menu {
                         Button(sync.isLinked ? "更换 iCloud 文件夹…" : "关联 iCloud 文件夹…") { files.importing = .folder }
                         Button("导入 .json…") { files.importing = .json }
@@ -168,8 +192,10 @@ struct TopBar: View {
                             Button("取消关联（只存本机）", role: .destructive) { sync.unlink() }
                         }
                     } label: {
-                        Text("文件").font(.ui(13.5)).foregroundStyle(C.ink)
-                            .padding(.horizontal, 12).padding(.vertical, 6)
+                        Text("文件").font(.ui(layout.narrow ? 12.5 : 13.5)).foregroundStyle(C.ink)
+                            .lineLimit(1).minimumScaleFactor(0.75).allowsTightening(true)
+                            .padding(.horizontal, layout.narrow ? 9 : 12)
+                            .padding(.vertical, layout.narrow ? 4 : 6)
                             .background(RoundedRectangle(cornerRadius: 7).fill(C.paper))
                             .overlay(RoundedRectangle(cornerRadius: 7).stroke(C.line))
                     }
@@ -263,7 +289,11 @@ struct TabStickers: View {
         return Button { store.go(t) } label: {
             HStack(spacing: 6) {
                 Text(t.cn).font(.ui(14, .bold)).foregroundStyle(on ? .white : C.ink)
-                if vertical { Text(t.en).font(.hand(17)).foregroundStyle(on ? .white : C.ink3) }
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                if vertical {
+                    Text(t.en).font(.hand(17)).foregroundStyle(on ? .white : C.ink3)
+                        .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
+                }
             }
             .padding(.leading, vertical ? 10 : 12).padding(.trailing, 12)
             .padding(.vertical, vertical ? 8 : 6)

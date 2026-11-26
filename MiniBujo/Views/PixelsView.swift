@@ -15,12 +15,16 @@ struct PixelsLeft: View {
                 GridRow {
                     Color.clear.frame(width: 1, height: 1)
                     ForEach(Array("JFMAMJJASOND".enumerated()), id: \.offset) { _, c in
-                        Text(String(c)).font(.hand(15)).foregroundStyle(C.ink2).frame(width: w)
+                        Text(String(c)).font(.hand(15)).foregroundStyle(C.ink2)
+                            .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
+                            .frame(width: w)
                     }
                 }
                 ForEach(1...31, id: \.self) { d in
                     GridRow {
-                        Text("\(d)").font(.hand(13)).foregroundStyle(C.ink3).gridColumnAlignment(.trailing).padding(.trailing, 2)
+                        Text("\(d)").font(.hand(13)).foregroundStyle(C.ink3)
+                            .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
+                            .gridColumnAlignment(.trailing).padding(.trailing, 2)
                         ForEach(1...12, id: \.self) { m in
                             if d > Dates.daysInMonth(y, m) {
                                 Color.clear.frame(width: w, height: h)

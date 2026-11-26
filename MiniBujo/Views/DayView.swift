@@ -9,9 +9,9 @@ struct DayPage: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 10) {
                 Text("\(s.dropFirst(5).prefix(2))/\(s.suffix(2))/\(s.prefix(4))").font(.hand(30)).foregroundStyle(C.ink)
-                    .lineLimit(1).fixedSize()
+                    .lineLimit(1).minimumScaleFactor(0.65).allowsTightening(true).layoutPriority(1)
                 Text(Dates.WD_FULL[i]).font(.hand(24)).foregroundStyle(C.ink2)
-                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .lineLimit(1).minimumScaleFactor(0.55).allowsTightening(true)
                 DotSticker(dot: o?.dot, size: 26) { store.cycleDot(s) }
                 Spacer(minLength: 0)
             }
@@ -66,6 +66,7 @@ private struct Timeline: View {
                 let hk = Dates.pad(h)
                 HStack(alignment: .top, spacing: 8) {
                     Text("\(h)").font(.hand(17)).foregroundStyle(C.ink3)
+                        .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                         .frame(width: 28, height: 26, alignment: .trailing)
                     TextField("", text: Binding(get: { store.doc.days[s]?.times[hk] ?? "" },
                                                 set: { v in store.editDay(s) { $0.times[hk] = v } }), axis: .vertical)

@@ -24,8 +24,8 @@ struct BulletList: View {
             if two {
                 HStack(spacing: 4) {
                     Spacer()
-                    Text("/").frame(width: 22)
-                    Text("X").frame(width: 22)
+                    Text("/").lineLimit(1).minimumScaleFactor(0.6).frame(width: 22)
+                    Text("X").lineLimit(1).minimumScaleFactor(0.6).frame(width: 22)
                 }
                 .font(.hand(15)).foregroundStyle(C.ink3)
             }
@@ -107,6 +107,7 @@ struct BulletList: View {
     private func cell(_ text: String, help: String = "", action: (() -> Void)? = nil) -> some View {
         Text(text)
             .font(.hand(20)).foregroundStyle(C.ink)
+            .lineLimit(1).minimumScaleFactor(0.6)
             .frame(width: 22).frame(minHeight: 26, maxHeight: .infinity)
             .overlay(alignment: .leading) { Rectangle().fill(C.ink).frame(width: 1.5) }
             .contentShape(Rectangle())

@@ -22,6 +22,7 @@ struct HabitsLeft: View {
                     }
                 } label: {
                     Text(v).font(.hand(22)).foregroundStyle(C.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6)
                         .frame(maxWidth: .infinity, maxHeight: .infinity).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -100,7 +101,11 @@ struct GridTable<Name: View, Cell: View>: View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
-                ForEach(0..<7, id: \.self) { Text(Dates.WD[$0]).font(.hand(15)).foregroundStyle(C.ink2).frame(width: cw) }
+                ForEach(0..<7, id: \.self) {
+                    Text(Dates.WD[$0]).font(.hand(15)).foregroundStyle(C.ink2)
+                        .lineLimit(1).minimumScaleFactor(0.55).allowsTightening(true)
+                        .frame(width: cw)
+                }
                 Color.clear.frame(width: 24, height: 1)
             }
             .padding(.bottom, 2)
@@ -152,7 +157,7 @@ private struct SleepTable: View {
             ForEach(0..<7, id: \.self) { i in
                 VStack(spacing: 0) {
                     HStack(spacing: 8) {
-                        Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(C.ink).lineLimit(1).fixedSize().frame(width: 38, alignment: .leading)
+                        Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true).frame(width: 38, alignment: .leading)
                         TimeCell(value: bind(\.bed, i), fallback: "23:00").frame(maxWidth: .infinity, alignment: .leading)
                         TimeCell(value: bind(\.wake, i), fallback: "07:00").frame(maxWidth: .infinity, alignment: .leading)
                         if !compact {

@@ -23,9 +23,17 @@ private struct Calendar: View {
         let n = Dates.daysInMonth(y, m), lead = Dates.wdIdx("\(key)-01"), t = Dates.today()
         let cols = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         VStack(spacing: 4) {
+            // 星期栏是固定版面：一格只有一个词，必须单行、放不下就缩小，
+            // 不能像正文一样换行。系统字体开得很大 / 窄屏时原来会把
+            // Mon、Tue、Sun 断成两行，整张日历跟着错位。
             LazyVGrid(columns: cols, spacing: 0) {
-                ForEach(Dates.WD, id: \.self) { Text($0).font(.hand(18)).foregroundStyle(C.ink2) }
+                ForEach(Dates.WD, id: \.self) {
+                    Text($0).font(.hand(18)).foregroundStyle(C.ink2)
+                        .lineLimit(1).minimumScaleFactor(0.55).allowsTightening(true)
+                        .frame(maxWidth: .infinity, minHeight: 22)
+                }
             }
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
             LazyVGrid(columns: cols, spacing: 6) {
                 ForEach(0..<lead, id: \.self) { _ in Color.clear.frame(height: 34) }
                 ForEach(1...n, id: \.self) { d in
@@ -44,6 +52,7 @@ private struct Calendar: View {
             ZStack {
                 Circle().fill(fill ?? .clear)
                 Text("\(d)").font(.hand(20)).foregroundStyle(fill == nil ? C.ink : .white)
+                    .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                 if has {
                     Circle().fill(fill == nil ? C.ink : .white).opacity(0.6).frame(width: 4, height: 4).offset(y: 12)
                 }
@@ -81,6 +90,7 @@ struct MonthRight: View {
         return HStack(alignment: .top, spacing: 8) {
             Button { store.go(.day, s) } label: {
                 Text("\(d)").font(.hand(18)).foregroundStyle(fill == nil ? C.ink : .white)
+                    .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                     .frame(width: 26, height: 22)
                     .background(Capsule().fill(fill ?? .clear))
                     .contentShape(Rectangle())
@@ -89,8 +99,7 @@ struct MonthRight: View {
             .padding(.top, 2)
             .help("打开这一天")
             Text(Dates.WD[i]).font(.hand(17)).foregroundStyle(s == today ? C.ink : C.ink3)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+                .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                 .frame(width: 48, height: 26, alignment: .leading)
             TextField("", text: Binding(get: { store.doc.days[s]?.mlog ?? "" },
                                         set: { v in store.editDay(s) { $0.mlog = v } }), axis: .vertical)
