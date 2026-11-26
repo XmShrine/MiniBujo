@@ -39,10 +39,55 @@ final class FileSync {
         return dir.appendingPathComponent(FileSync.fileName)
     }()
 
-    /// 启动时同步读本机缓存，保证界面一出来就有内容
+    /// 启动时同步读本机缓存，保证界面一出来就有内容。
+    /// macOS 1.4 起关闭 App Sandbox（以支持内置 iPhone 一键安装），
+    /// 首次启动时自动从旧沙盒容器迁移未关联 iCloud 的本机数据与偏好。
     func loadLocal() -> Doc {
-        (try? Data(contentsOf: localURL)).flatMap(Doc.parse) ?? Doc()
+        #if os(macOS)
+        migrateFromLegacySandboxIfNeeded()
+        #endif
+        return (try? Data(contentsOf: localURL)).flatMap(Doc.parse) ?? Doc()
     }
+
+    #if os(macOS)
+    private func migrateFromLegacySandboxIfNeeded() {
+        let fm = FileManager.default
+        let home = fm.homeDirectoryForCurrentUser
+        var bundleIDs = ["com.xmshrine.minibujo", "com.xmshrine.minibujo.v12"]
+        if let cur = Bundle.main.bundleIdentifier, !bundleIDs.contains(cur) { bundleIDs.insert(cur, at: 0) }
+
+        // 1. 迁移本机 my-bujo.json（仅当非沙盒目录尚无文件时）
+        if !fm.fileExists(atPath: localURL.path) {
+            var bestData: Data?
+            var bestUpdatedAt: Double = -1
+            for bid in bundleIDs {
+                let legacy = home
+                    .appendingPathComponent("Library/Containers/\(bid)/Data/Library/Application Support/MiniBujo/\(Self.fileName)")
+                if let data = try? Data(contentsOf: legacy), let doc = Doc.parse(data), doc.updatedAt > bestUpdatedAt {
+                    bestData = data
+                    bestUpdatedAt = doc.updatedAt
+                }
+            }
+            if let bestData { try? bestData.write(to: localURL, options: .atomic) }
+        }
+
+        // 2. 迁移常用偏好设置（仅执行一次，且不覆盖已有新值）
+        let flagKey = "migratedFromLegacySandboxV1"
+        guard !defaults.bool(forKey: flagKey) else { return }
+        defaults.set(true, forKey: flagKey)
+        let keysToMigrate = [
+            Self.bookmarkKey, "view", "hideBanner",
+            AppearanceKeys.paperForm, AppearanceKeys.font, AppearanceKeys.textSize, AppearanceKeys.palette
+        ]
+        for bid in bundleIDs {
+            let plist = home.appendingPathComponent("Library/Containers/\(bid)/Data/Library/Preferences/\(bid).plist")
+            guard let dict = NSDictionary(contentsOf: plist) as? [String: Any] else { continue }
+            for key in keysToMigrate where defaults.object(forKey: key) == nil {
+                if let v = dict[key] { defaults.set(v, forKey: key) }
+            }
+        }
+    }
+    #endif
 
     func attach(_ store: BujoStore) {
         self.store = store
@@ -55,7 +100,7 @@ final class FileSync {
         let scoped = url.startAccessingSecurityScopedResource()
         do {
             #if os(macOS)
-            let data = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let data = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             #else
             let data = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
             #endif
@@ -89,19 +134,19 @@ final class FileSync {
         var stale = false
         do {
             #if os(macOS)
-            let url = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale)
+            let url = try URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+            _ = url.startAccessingSecurityScopedResource()
+            guard FileManager.default.fileExists(atPath: url.path) else { needsRelink = true; return }
+            if stale, let fresh = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
+                defaults.set(fresh, forKey: Self.bookmarkKey)
+            }
             #else
             let url = try URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
-            #endif
             guard url.startAccessingSecurityScopedResource() else { needsRelink = true; return }
-            if stale {
-                #if os(macOS)
-                let fresh = try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-                #else
-                let fresh = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
-                #endif
-                if let fresh { defaults.set(fresh, forKey: Self.bookmarkKey) }
+            if stale, let fresh = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil) {
+                defaults.set(fresh, forKey: Self.bookmarkKey)
             }
+            #endif
             use(folder: url)
             reconcile(announce: false)
         } catch {

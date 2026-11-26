@@ -15,7 +15,7 @@ extension EnvironmentValues {
     }
 }
 
-/// 让页面上的按钮能打开文件选择器 / 导出 / 显示设置
+/// 让页面上的按钮能打开文件选择器 / 导出 / 显示设置 / iPhone 安装
 @MainActor
 @Observable
 final class FileActions {
@@ -23,6 +23,9 @@ final class FileActions {
     var importing: Importing?
     var exporting = false
     var showingAppearance = false
+    #if os(macOS)
+    var showingIOSInstaller = false
+    #endif
 }
 
 struct RootView: View {
@@ -62,6 +65,14 @@ struct RootView: View {
             NavigationStack { AppearanceSettingsView() }
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
+        #if os(macOS)
+        .sheet(isPresented: Binding(get: { files.showingIOSInstaller }, set: { files.showingIOSInstaller = $0 })) {
+            NavigationStack { IOSInstallerView() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openIOSInstaller)) { _ in
+            files.showingIOSInstaller = true
+        }
+        #endif
         .alert(store.confirm?.title ?? "", isPresented: Binding(
             get: { store.confirm != nil }, set: { if !$0 { store.confirm = nil } }
         ), presenting: store.confirm) { c in
@@ -187,6 +198,10 @@ struct TopBar: View {
                         Button(sync.isLinked ? "更换 iCloud 文件夹…" : "关联 iCloud 文件夹…") { files.importing = .folder }
                         Button("导入 .json…") { files.importing = .json }
                         Button("导出 .json…") { files.exporting = true }
+                        #if os(macOS)
+                        Divider()
+                        Button("安装 / 更新到 iPhone…") { files.showingIOSInstaller = true }
+                        #endif
                         if sync.isLinked {
                             Divider()
                             Button("取消关联（只存本机）", role: .destructive) { sync.unlink() }

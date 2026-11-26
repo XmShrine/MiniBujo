@@ -75,6 +75,9 @@ struct MiniBujoApp: App {
             CommandGroup(after: .appInfo) {
                 Button("检查更新…") { appUpdater.checkForUpdates() }
                     .disabled(!appUpdater.canCheckForUpdates)
+                Button("安装 / 更新到 iPhone…") {
+                    NotificationCenter.default.post(name: .openIOSInstaller, object: nil)
+                }
             }
             #endif
         }
@@ -96,6 +99,12 @@ struct MiniBujoApp: App {
     }
     #endif
 }
+
+#if os(macOS)
+extension Notification.Name {
+    static let openIOSInstaller = Notification.Name("com.xmshrine.minibujo.openIOSInstaller")
+}
+#endif
 
 /// 键盘快捷键（Mac 和接了键盘的 iPad）
 struct BujoCommands: Commands {

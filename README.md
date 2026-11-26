@@ -44,11 +44,19 @@ macOS 版内置 [Sparkle 2](https://sparkle-project.org/)，在菜单栏 **Mini 
 
 JSON 与[网页版极简手帐](https://trick-1.pages.dev/BUJ_min/index.html)互通，可以在「文件」菜单导入、导出。导入会替换当前全部内容，操作前建议导出备份。多端冲突采用更新时间较新的整份文档覆盖，**不做逐条合并**；尽量避免多台设备离线同时修改。
 
-## iOS / iPadOS：用自己的账号编译安装
+## iOS / iPadOS：一键安装与更新
 
-需要 **iOS / iPadOS 17 或更新版本**。本项目目前没有 App Store / TestFlight 分发；macOS 的 ZIP 不能安装到 iPhone。**iOS 不含 Sparkle，不提供 App 内安装更新**。
+需要 **iOS / iPadOS 17 或更新版本**。本项目目前没有 App Store / TestFlight 分发；macOS 的 ZIP 不能安装到 iPhone。
 
-在 Mac 上使用 Xcode 为自己的设备编译：
+### 方式一：通过 macOS 版内置一键安装（推荐，签名只需设一次）
+
+如果 Mac 已安装 Xcode 并登录过一次自己的 Apple ID（Xcode → Settings → Accounts）：
+
+1. 在 macOS 版 Mini Bujo 菜单栏点 **Mini Bujo → 安装 / 更新到 iPhone…**（或顶栏「文件」菜单中进入）。
+2. 用数据线连接 iPhone（或确保已配对且在同一 Wi-Fi），确认自动识别出的个人 **Team ID** 与固定 **Bundle ID**（只需确认一次，之后自动记住）。
+3. 点击 **一键安装 / 更新**，App 会自动下载对应版本源码、后台调用本机 Xcode 签名编译并安装到手机，以后每次升级都不用再打开 Xcode 手动改签名。
+
+### 方式二：手动用 Xcode 编译安装
 
 1. 克隆仓库并打开 `MiniBujo.xcodeproj`。项目当前使用 Xcode 27.2 格式；建议使用同版本或支持该项目格式、设备系统的更新版本。首次打开需要联网解析 Swift Package 依赖。
 2. 在 **Xcode → Settings → Accounts** 添加自己的 Apple ID。

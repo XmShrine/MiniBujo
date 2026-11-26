@@ -279,3 +279,61 @@ final class AppearanceTests: XCTestCase {
         }
     }
 }
+
+#if os(macOS)
+final class IOSInstallerTests: XCTestCase {
+    func testParseSigningTeamsExtractsOUAndDeduplicates() {
+        let sample = """
+        subject=UID=Q8HAU7WGPT, CN=Apple Development: alice@example.com (VA76MM3DW6), OU=WLA23K8VAC, O=Alice, C=US
+        subject=UID=Q8HAU7WGPT, CN=Apple Development: alice@example.com (VA76MM3DW6), OU=WLA23K8VAC, O=Alice, C=US
+        subject=CN=Apple Development: bob@example.com (BB11223344), OU=AB12CD34EF, O=Bob, C=US
+        subject=CN=Invalid Cert, OU=short
+        """
+        let teams = IOSInstallerCore.parseSigningTeams(from: sample)
+        XCTAssertEqual(teams.map(\.id), ["WLA23K8VAC", "AB12CD34EF"])
+        XCTAssertTrue(teams[0].label.contains("alice@example.com"))
+    }
+
+    func testParseDevicesFiltersPhysicalIOSOnly() {
+        let json = """
+        {
+          "result": {
+            "devices": [
+              {
+                "identifier": "core-1",
+                "connectionProperties": { "pairingState": "paired", "transportType": "localNetwork" },
+                "deviceProperties": { "name": "My iPhone", "osVersionNumber": "18.2", "developerModeStatus": "enabled" },
+                "hardwareProperties": { "reality": "physical", "platform": "iOS", "udid": "00008140-1234", "marketingName": "iPhone 16 Pro" }
+              },
+              {
+                "identifier": "sim-1",
+                "connectionProperties": { "pairingState": "paired", "transportType": "localNetwork" },
+                "deviceProperties": { "name": "Simulator", "osVersionNumber": "18.2" },
+                "hardwareProperties": { "reality": "simulated", "platform": "iOS", "udid": "SIM-1" }
+              }
+            ]
+          }
+        }
+        """
+        let devices = IOSInstallerCore.parseDevices(from: Data(json.utf8))
+        XCTAssertEqual(devices.count, 1)
+        XCTAssertEqual(devices[0].udid, "00008140-1234")
+        XCTAssertEqual(devices[0].name, "My iPhone")
+        XCTAssertEqual(devices[0].transportLabel, "Wi-Fi")
+        XCTAssertTrue(devices[0].paired)
+    }
+
+    func testDefaultBundleIDAndXcodebuildArgs() {
+        let bid = IOSInstallerCore.defaultBundleID(forTeamID: "WLA23K8VAC")
+        XCTAssertEqual(bid, "com.minibujo.wla23k8vac")
+        let args = IOSInstallerCore.xcodebuildArguments(
+            projectPath: "/tmp/MiniBujo.xcodeproj", udid: "00008140-1234",
+            derivedDataPath: "/tmp/dd", teamID: "WLA23K8VAC", bundleID: bid
+        )
+        XCTAssertTrue(args.contains("-allowProvisioningUpdates"))
+        XCTAssertTrue(args.contains("DEVELOPMENT_TEAM=WLA23K8VAC"))
+        XCTAssertTrue(args.contains("PRODUCT_BUNDLE_IDENTIFIER=com.minibujo.wla23k8vac"))
+        XCTAssertEqual(IOSInstallerCore.sourceArchiveURLs(appVersion: "1.4").count, 2)
+    }
+}
+#endif
