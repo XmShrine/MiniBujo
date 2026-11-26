@@ -3,6 +3,12 @@ import SwiftUI
 struct MonthLeft: View {
     @Environment(BujoStore.self) private var store
 
+    static func calendarSlots(year: Int, month: Int) -> [Int?] {
+        let lead = Dates.wdIdx("\(year)-\(Dates.pad(month))-01")
+        let n = Dates.daysInMonth(year, month)
+        return Array(repeating: nil, count: lead) + (1...n).map { Optional($0) }
+    }
+
     var body: some View {
         let key = String(store.date.prefix(7)), y = Dates.year(store.date), m = Dates.month(store.date)
         VStack(alignment: .leading, spacing: 0) {
@@ -20,7 +26,7 @@ private struct Calendar: View {
     let key: String, y: Int, m: Int
 
     var body: some View {
-        let n = Dates.daysInMonth(y, m), lead = Dates.wdIdx("\(key)-01"), t = Dates.today()
+        let slots = MonthLeft.calendarSlots(year: y, month: m), t = Dates.today()
         let cols = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         VStack(spacing: 4) {
             // 星期栏是固定版面：一格只有一个词，必须单行、放不下就缩小，
@@ -35,10 +41,13 @@ private struct Calendar: View {
             }
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
             LazyVGrid(columns: cols, spacing: 6) {
-                ForEach(0..<lead, id: \.self) { _ in Color.clear.frame(height: 34) }
-                ForEach(1...n, id: \.self) { d in
-                    let s = "\(key)-\(Dates.pad(d))", o = store.doc.days[s]
-                    cell(d: d, s: s, dot: o?.dot, today: s == t, has: !(o?.main.isEmpty ?? true) || !(o?.light.isEmpty ?? true))
+                ForEach(Array(slots.enumerated()), id: \.offset) { _, day in
+                    if let d = day {
+                        let s = "\(key)-\(Dates.pad(d))", o = store.doc.days[s]
+                        cell(d: d, s: s, dot: o?.dot, today: s == t, has: !(o?.main.isEmpty ?? true) || !(o?.light.isEmpty ?? true))
+                    } else {
+                        Color.clear.frame(height: 34)
+                    }
                 }
             }
         }

@@ -264,4 +264,18 @@ final class AppearanceTests: XCTestCase {
         XCTAssertEqual(Dates.WD, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
         XCTAssertTrue(Dates.WD.allSatisfy { $0.count == 3 })
     }
+
+    func testCalendarSlotsContainAllDaysWithLeadingBlanks() {
+        // 2026-11-01 是周日（lead = 6），不能因前置空格与日期 ID 冲突而丢失 1~5 号
+        let nov2026 = MonthLeft.calendarSlots(year: 2026, month: 11)
+        XCTAssertEqual(nov2026.count, 36)
+        XCTAssertEqual(nov2026.prefix(6).compactMap { $0 }, [])
+        XCTAssertEqual(nov2026.dropFirst(6).compactMap { $0 }, Array(1...30))
+
+        for m in 1...12 {
+            let slots = MonthLeft.calendarSlots(year: 2026, month: m)
+            let days = slots.compactMap { $0 }
+            XCTAssertEqual(days, Array(1...Dates.daysInMonth(2026, m)), "2026-\(m) 天数必须完整")
+        }
+    }
 }
