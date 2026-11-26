@@ -7,10 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-        D10000000000000000000001 /* MiniBujoUpdates in Frameworks */ = {isa = PBXBuildFile; platformFilter = macos; productRef = D20000000000000000000001 /* MiniBujoUpdates */; };
+		D10000000000000000000001 /* MiniBujoUpdates in Frameworks */ = {isa = PBXBuildFile; productRef = D20000000000000000000001 /* MiniBujoUpdates */; };
 /* End PBXBuildFile section */
-
-
 
 /* Begin PBXContainerItemProxy section */
 		B10000000000000000000001 /* PBXContainerItemProxy */ = {
@@ -46,7 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-                D10000000000000000000001 /* MiniBujoUpdates in Frameworks */,
+				D10000000000000000000001 /* MiniBujoUpdates in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,8 +95,10 @@
 			fileSystemSynchronizedGroups = (
 				A50000000000000000000001 /* MiniBujo */,
 			);
-			packageProductDependencies = (D20000000000000000000001 /* MiniBujoUpdates */, );
 			name = MiniBujo;
+			packageProductDependencies = (
+				D20000000000000000000001 /* MiniBujoUpdates */,
+			);
 			productName = MiniBujo;
 			productReference = A40000000000000000000001 /* MiniBujo.app */;
 			productType = "com.apple.product-type.application";
@@ -153,9 +153,11 @@
 			);
 			mainGroup = A20000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D30000000000000000000001 /* XCLocalSwiftPackageReference "Packages/MiniBujoUpdates" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A20000000000000000000002 /* Products */;
-			packageReferences = (D30000000000000000000001 /* MiniBujoUpdates */, );
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -206,21 +208,6 @@
 			targetProxy = B10000000000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin XCLocalSwiftPackageReference section */
-        D30000000000000000000001 /* MiniBujoUpdates */ = {
-            isa = XCLocalSwiftPackageReference;
-            relativePath = Packages/MiniBujoUpdates;
-        };
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-        D20000000000000000000001 /* MiniBujoUpdates */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = D30000000000000000000001 /* MiniBujoUpdates */;
-            productName = MiniBujoUpdates;
-        };
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C10000000000000000000001 /* Debug */ = {
@@ -280,13 +267,13 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Config/MiniBujo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-                "CURRENT_PROJECT_VERSION[sdk=macosx*]" = 4;
+				"CURRENT_PROJECT_VERSION[sdk=macosx*]" = 5;
 				DEVELOPMENT_TEAM = WLA23K8VAC;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-                "INFOPLIST_FILE[sdk=macosx*]" = Config/MacInfo.plist;
+				"INFOPLIST_FILE[sdk=macosx*]" = Config/MacInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mini Bujo";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -300,8 +287,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0;
-                "MARKETING_VERSION[sdk=macosx*]" = 1.2;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xmshrine.minibujo;
+				"MARKETING_VERSION[sdk=macosx*]" = 1.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xmshrine.minibujo.v12;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -320,16 +307,16 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Config/MiniBujo.entitlements;
+				"CODE_SIGN_INJECT_BASE_ENTITLEMENTS[sdk=macosx*]" = NO;
 				CODE_SIGN_STYLE = Automatic;
-                "CODE_SIGN_INJECT_BASE_ENTITLEMENTS[sdk=macosx*]" = NO;
 				CURRENT_PROJECT_VERSION = 1;
-                "CURRENT_PROJECT_VERSION[sdk=macosx*]" = 4;
+				"CURRENT_PROJECT_VERSION[sdk=macosx*]" = 5;
 				DEVELOPMENT_TEAM = WLA23K8VAC;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-                "INFOPLIST_FILE[sdk=macosx*]" = Config/MacInfo.plist;
+				"INFOPLIST_FILE[sdk=macosx*]" = Config/MacInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mini Bujo";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -343,8 +330,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0;
-                "MARKETING_VERSION[sdk=macosx*]" = 1.2;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xmshrine.minibujo;
+				"MARKETING_VERSION[sdk=macosx*]" = 1.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xmshrine.minibujo.v12;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -428,6 +415,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D30000000000000000000001 /* XCLocalSwiftPackageReference "Packages/MiniBujoUpdates" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/MiniBujoUpdates;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D20000000000000000000001 /* MiniBujoUpdates */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D30000000000000000000001 /* XCLocalSwiftPackageReference "Packages/MiniBujoUpdates" */;
+			productName = MiniBujoUpdates;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A10000000000000000000001 /* Project object */;
 }
