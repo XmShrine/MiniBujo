@@ -370,12 +370,15 @@ final class IOSInstaller {
         return IOSInstallerCore.parseDevices(from: data)
     }
 
-    private static func friendlyError(from output: String, fallback: String) -> String {
+    static func friendlyError(from output: String, fallback: String) -> String {
         if output.contains("No profiles for") || output.contains("No Account for Team") || output.contains("requires a provisioning profile") {
             return "签名账号未就绪：请先打开一次 Xcode → Settings → Accounts 登录你的 Apple ID，然后重试。"
         }
         if output.contains("cannot be registered to your development team") || output.contains("is not available") {
             return "Bundle ID 已被占用，请在下方换一个专属的 Bundle ID（例如末尾加几个字母）后重试。"
+        }
+        if output.contains("maximum number of installed apps") {
+            return "免费个人 Apple ID 在同一台 iPhone 上最多同时安装 3 个自签 App。请先删掉手机上的一个自签 App，或将下方「专属 Bundle ID」改成手机上已安装的旧版 Mini Bujo ID 以直接覆盖升级。"
         }
         if output.contains("locked") || output.contains("Locked") {
             return "iPhone 当前处于锁屏状态，请先解锁手机并在弹窗点「信任」后重试。"

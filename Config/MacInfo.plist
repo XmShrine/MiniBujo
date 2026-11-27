@@ -6,8 +6,6 @@
     <string>https://github.com/XmShrine/MiniBujo/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>SzUNZQ1rxdG2iItpPDBbVjE9F5xpO9goXJ9RKkcyVK0=</string>
-    <key>SUEnableInstallerLauncherService</key>
-    <true/>
     <key>SUVerifyUpdateBeforeExtraction</key>
     <true/>
 </dict>

@@ -92,7 +92,7 @@ bash scripts/package-macos.sh 1.2 3
 3. 确认无误后发布，并设为 **Latest 正式 Release**。App 的固定清单地址是 `https://github.com/XmShrine/MiniBujo/releases/latest/download/appcast.xml`；只有 draft 或 prerelease 而没有正式 Release 时，该地址不可用。
 4. 至少用一个较旧的测试副本走完「检查 → 下载 → 验签 → 安装 → 重启」，再确认数据保留。更新会替换整个 App；不会热更新正在运行的 Swift 代码。
 
-没有付费账号的分发策略是 ad-hoc 签名 + Sparkle 更新签名。为使本地签名 App 能加载 Sparkle，macOS 权限中关闭了 library validation，保留 App Sandbox 和 Hardened Runtime。若未来使用 Developer ID 公证分发，应重新收紧并验证这项权限。
+没有付费账号的分发策略是 ad-hoc 签名 + Sparkle 更新签名。为使本地签名 App 能加载 Sparkle，macOS 权限中关闭了 library validation，保留 Hardened Runtime（为支持内置 iPhone 安装器调用本机 Xcode 工具链，1.4 起不再启用 App Sandbox）。若未来使用 Developer ID 公证分发，应重新收紧并验证相关权限。
 
 ## 目录
 

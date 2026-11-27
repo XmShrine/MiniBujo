@@ -346,5 +346,13 @@ final class IOSInstallerTests: XCTestCase {
         XCTAssertTrue(args.contains("PRODUCT_BUNDLE_IDENTIFIER=com.minibujo.wla23k8vac"))
         XCTAssertEqual(IOSInstallerCore.sourceArchiveURLs(appVersion: "1.4").count, 2)
     }
+
+    @MainActor
+    func testFriendlyErrorDetectsFreeProfileAppLimit() {
+        let log = "This device has reached the maximum number of installed apps using a free developer profile"
+        let msg = IOSInstaller.friendlyError(from: log, fallback: "fallback")
+        XCTAssertTrue(msg.contains("3 个自签 App"))
+        XCTAssertTrue(msg.contains("专属 Bundle ID"))
+    }
 }
 #endif
