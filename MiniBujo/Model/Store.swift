@@ -123,15 +123,25 @@ final class BujoStore {
         }
     }
 
-    var navLabel: String? {
+    struct NavTitle: Equatable {
+        let main: String
+        let sub: String?
+    }
+
+    var navTitle: NavTitle? {
         let mon = Dates.mondayOf(date)
         switch view {
-        case .month: return "\(Dates.MONTHS[Dates.month(date) - 1]) \(Dates.year(date))"
-        case .week, .habits: return "week \(Dates.weekNo(mon)) · \(Dates.fmtMD(mon))–\(Dates.fmtMD(Dates.addDays(mon, 6)))"
-        case .day: return "\(Dates.fmtMD(date)) 周\(Dates.WD_CN[Dates.wdIdx(date)])"
-        case .pixels: return String(date.prefix(4))
+        case .month: return NavTitle(main: "\(Dates.MONTHS[Dates.month(date) - 1]) \(Dates.year(date))", sub: nil)
+        case .week, .habits: return NavTitle(main: "week \(Dates.weekNo(mon)) · \(Dates.fmtMD(mon))–\(Dates.fmtMD(Dates.addDays(mon, 6)))", sub: nil)
+        case .day: return NavTitle(main: Dates.fmtMD(date), sub: "周\(Dates.WD_CN[Dates.wdIdx(date)])")
+        case .pixels: return NavTitle(main: String(date.prefix(4)), sub: nil)
         default: return nil
         }
+    }
+
+    var navLabel: String? {
+        guard let t = navTitle else { return nil }
+        return t.sub.map { "\(t.main) \($0)" } ?? t.main
     }
 
     // MARK: - weeks（只是翻看时不写入；第一次编辑才落盘）

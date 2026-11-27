@@ -2,16 +2,17 @@ import SwiftUI
 
 struct DayPage: View {
     @Environment(BujoStore.self) private var store
+    @Environment(\.layout) private var layout
     let s: String
 
     var body: some View {
         let o = store.doc.days[s], i = Dates.wdIdx(s)
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: 10) {
-                Text("\(s.dropFirst(5).prefix(2))/\(s.suffix(2))/\(s.prefix(4))").font(.hand(30)).foregroundStyle(C.ink)
-                    .lineLimit(1).minimumScaleFactor(0.65).allowsTightening(true).layoutPriority(1)
-                Text(Dates.WD_FULL[i]).font(.hand(24)).foregroundStyle(C.ink2)
-                    .lineLimit(1).minimumScaleFactor(0.55).allowsTightening(true)
+            HStack(alignment: .center, spacing: layout.narrow ? 8 : 10) {
+                Text("\(s.dropFirst(5).prefix(2))/\(s.suffix(2))/\(s.prefix(4))").font(.hand(layout.narrow ? 26 : 30)).foregroundStyle(C.ink)
+                    .lineLimit(1).minimumScaleFactor(0.5).allowsTightening(true)
+                Text(Dates.WD_FULL[i]).font(.hand(layout.narrow ? 20 : 24)).foregroundStyle(C.ink2)
+                    .lineLimit(1).minimumScaleFactor(0.5).allowsTightening(true)
                 DotSticker(dot: o?.dot, size: 26) { store.cycleDot(s) }
                 Spacer(minLength: 0)
             }

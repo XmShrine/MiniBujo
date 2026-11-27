@@ -67,7 +67,7 @@ extension Font {
     static func hand(_ size: CGFloat) -> Font {
         let scaled = size * DisplayTextSize.currentScale
         switch DisplayFont.current {
-        case .handwriting: return .custom("BradleyHandITCTT-Bold", size: scaled)
+        case .handwriting: return .custom("BradleyHandITCTT-Bold", fixedSize: scaled)
         case .rounded: return .system(size: scaled, weight: .bold, design: .rounded)
         case .serif: return .system(size: scaled, weight: .bold, design: .serif)
         case .system: return .system(size: scaled, weight: .bold)

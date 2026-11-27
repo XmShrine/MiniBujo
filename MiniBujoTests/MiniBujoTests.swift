@@ -265,6 +265,17 @@ final class AppearanceTests: XCTestCase {
         XCTAssertTrue(Dates.WD.allSatisfy { $0.count == 3 })
     }
 
+    @MainActor
+    func testDayNavTitleSeparatesChineseWeekdayFromHandwritingDate() {
+        let store = BujoStore(doc: Doc())
+        store.go(.day, "2026-11-27")
+        XCTAssertEqual(store.navTitle, BujoStore.NavTitle(main: "11/27", sub: "周五"))
+        XCTAssertEqual(store.navLabel, "11/27 周五")
+
+        store.go(.month, "2026-11-27")
+        XCTAssertEqual(store.navTitle, BujoStore.NavTitle(main: "November 2026", sub: nil))
+    }
+
     func testCalendarSlotsContainAllDaysWithLeadingBlanks() {
         // 2026-11-01 是周日（lead = 6），不能因前置空格与日期 ID 冲突而丢失 1~5 号
         let nov2026 = MonthLeft.calendarSlots(year: 2026, month: 11)

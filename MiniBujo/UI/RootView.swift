@@ -254,12 +254,18 @@ struct NavBar: View {
     @Environment(\.layout) private var layout
 
     var body: some View {
-        if let lbl = store.navLabel {
+        if let title = store.navTitle {
             HStack(spacing: 8) {
                 arrow("‹", -1)
-                Text(lbl).font(.hand(layout.wide ? 26 : 23)).foregroundStyle(C.ink)
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                    .frame(maxWidth: .infinity)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(title.main).font(.hand(layout.wide ? 26 : 23)).foregroundStyle(C.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    if let sub = title.sub {
+                        Text(sub).font(.ui(layout.wide ? 16 : 14.5, .medium)).foregroundStyle(C.ink2)
+                            .lineLimit(1).minimumScaleFactor(0.75)
+                    }
+                }
+                .frame(maxWidth: .infinity)
                 arrow("›", 1)
                 Button("今天") { store.nav(0) }.buttonStyle(.pill)
             }
@@ -293,9 +299,9 @@ struct TabStickers: View {
         if vertical {
             VStack(alignment: .leading, spacing: 8) { ForEach(Tab.allCases) { sticker($0) } }
         } else {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) { ForEach(Tab.allCases) { sticker($0) } }.padding(.vertical, 2)
-            }
+            HStack(spacing: 6) { ForEach(Tab.allCases) { sticker($0) } }
+                .padding(.vertical, 2)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -304,13 +310,14 @@ struct TabStickers: View {
         return Button { store.go(t) } label: {
             HStack(spacing: 6) {
                 Text(t.cn).font(.ui(14, .bold)).foregroundStyle(on ? .white : C.ink)
-                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .lineLimit(1).minimumScaleFactor(0.7).allowsTightening(true)
                 if vertical {
                     Text(t.en).font(.hand(17)).foregroundStyle(on ? .white : C.ink3)
                         .lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
                 }
             }
-            .padding(.leading, vertical ? 10 : 12).padding(.trailing, 12)
+            .frame(maxWidth: vertical ? nil : .infinity)
+            .padding(.leading, vertical ? 10 : 4).padding(.trailing, vertical ? 12 : 4)
             .padding(.vertical, vertical ? 8 : 6)
             .background(on ? c : C.paper)
             .overlay(alignment: vertical ? .leading : .top) {
